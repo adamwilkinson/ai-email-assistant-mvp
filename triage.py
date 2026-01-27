@@ -3,85 +3,6 @@ from typing import Any, Dict, List
 import requests
 from jsonschema import validate
 
-def apply_defaults(out: dict) -> dict:
-    base = {
-        "domain": "other",
-        "intent": "other",
-        "priority": "normal",
-        "confidence": 0.5,
-        "rationale": "",
-        "extractions": [],
-        "recommended_actions": [],
-    }
-    base.update(out or {})
-
-    # If it's ignore/noise, enforce a safe suppress action
-    if base["priority"] == "ignore" and not base["recommended_actions"]:
-        base["recommended_actions"] = [{
-            "action": "suppress",
-            "title": "Ignore low-impact email",
-            "notes": "No action required.",
-            "due_date": None,
-            "urgency_window": None
-        }]
-    return base
-
-def normalize_output(out: dict) -> dict:
-    # Defaults
-    base = {
-        "domain": "other",
-        "intent": "other",
-        "priority": "normal",
-        "confidence": 0.5,
-        "rationale": "",
-        "extractions": [],
-        "recommended_actions": [],
-    }
-    base.update(out or {})
-
-    # Normalize priority aliases
-    p = (base.get("priority") or "").strip().lower()
-    priority_map = {
-        "medium": "normal",
-        "med": "normal",
-        "low": "ignore",
-        "none": "ignore",
-        "informational": "ignore",
-    }
-    base["priority"] = priority_map.get(p, p) or "normal"
-
-    # Normalize domain aliases (optional hardening)
-    d = (base.get("domain") or "").strip().lower()
-    domain_map = {
-        "receivables": "payment",
-        "invoice": "payment",
-        "billing": "payment",
-        "renewals": "expiry",
-    }
-    base["domain"] = domain_map.get(d, d) or "other"
-
-    # Normalize intent aliases (optional hardening)
-    i = (base.get("intent") or "").strip().lower()
-    intent_map = {
-        "follow_up": "followup_needed",
-        "followup": "followup_needed",
-        "pay": "payment_commitment",
-        "payment": "payment_commitment",
-    }
-    base["intent"] = intent_map.get(i, i) or "other"
-
-    # If ignore/noise but no actions, add suppress so schema passes
-    if base["priority"] == "ignore" and not base["recommended_actions"]:
-        base["recommended_actions"] = [{
-            "action": "suppress",
-            "title": "Ignore low-impact email",
-            "notes": "No action required.",
-            "due_date": None,
-            "urgency_window": None
-        }]
-
-    return base
-
 def load_schema(path: str) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -106,8 +27,7 @@ def strip_quotes_and_signatures(text: str) -> str:
 def build_prompt(thread_subject: str, messages: List[Dict[str, Any]]) -> str:
     parts = []
     parts.append("You are an AI assistant for a financial analyst and auditor.")
-    parts.append("Return ONLY valid JSON that matches the provided schema. Be EXACT when referencing the schema for allowed values AND ensure EXACTLY these top-level keys:")
-    parts.append(" domain, intent, priority, confidence, rationale, extractions, recommended_actions. Always include all keys.")
+    parts.append("Return ONLY valid JSON that matches the provided schema. Be EXACT when referencing the schema for allowed values.")
     parts.append("Be conservative: if low-impact or informational, set priority='ignore' and domain='noise'.")
     parts.append("If no action is needed: domain=\"noise\", intent=\"fyi\", priority=\"ignore\", confidence between 0 and 1, ")
     parts.append("extractions=[], recommended_actions=[{\"action\":\"suppress\",\"title\":\"Ignore low-impact email\",")
