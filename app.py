@@ -89,7 +89,7 @@ def main():
         print(f"[{now_iso()}] open tasks: {len(tasks)}")
         if send_digest:
             html = render_digest(tasks)
-            send_digest_via_gmail_api(svc, user, user, "Daily Action Digest — Email Intelligence MVP", html)
+            send_digest_via_gmail_api(svc, user, user, "[EIMVP DIGEST] Daily Action Digest — Email Intelligence MVP", html)
             print(f"[{now_iso()}] digest sent to {user}")
 
     if args.run_once:

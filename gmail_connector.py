@@ -36,7 +36,7 @@ def _iso_from_ms(ms: str) -> str:
     return dt.datetime.fromtimestamp(ts).isoformat()
 
 def fetch_recent_threads(service, user_id: str, lookback_days: int = 2, max_threads: int = 50) -> List[Dict[str, Any]]:
-    q = f"newer_than:{lookback_days}d -category:promotions -category:social"
+    q = f"newer_than:{lookback_days}d -category:promotions -category:social -subject:'[EIMVP DIGEST]'"
     res = service.users().threads().list(userId=user_id, q=q, maxResults=max_threads).execute()
     threads = res.get("threads", [])
     out = []
