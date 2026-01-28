@@ -2,26 +2,20 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "EmailTriageResult",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "domain",
     "intent",
     "priority",
     "confidence",
+    "rationale",
     "extractions",
     "recommended_actions"
   ],
   "properties": {
     "domain": {
       "type": "string",
-      "enum": [
-        "audit",
-        "expiry",
-        "followup",
-        "payment",
-        "scheduling",
-        "other",
-        "noise"
-      ]
+      "enum": ["audit", "expiry", "followup", "payment", "scheduling", "other", "noise"]
     },
     "intent": {
       "type": "string",
@@ -38,12 +32,7 @@
     },
     "priority": {
       "type": "string",
-      "enum": [
-        "urgent",
-        "high",
-        "normal",
-        "ignore"
-      ]
+      "enum": ["urgent", "high", "normal", "ignore"]
     },
     "confidence": {
       "type": "number",
@@ -57,9 +46,16 @@
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "type",
-          "summary"
+          "summary",
+          "due_date",
+          "amount",
+          "currency",
+          "invoice_id",
+          "counterparty",
+          "confidence"
         ],
         "properties": {
           "type": {
@@ -74,48 +70,13 @@
               "risk"
             ]
           },
-          "summary": {
-            "type": "string"
-          },
-          "due_date": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "ISO YYYY-MM-DD if known"
-          },
-          "amount": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "currency": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "invoice_id": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "counterparty": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "confidence": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "minimum": 0,
-            "maximum": 1
-          }
+          "summary": { "type": "string" },
+          "due_date": { "type": ["string", "null"], "description": "ISO date YYYY-MM-DD if known" },
+          "amount": { "type": ["number", "null"] },
+          "currency": { "type": ["string", "null"] },
+          "invoice_id": { "type": ["string", "null"] },
+          "counterparty": { "type": ["string", "null"] },
+          "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
         }
       }
     },
@@ -123,10 +84,8 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "action",
-          "title"
-        ],
+        "additionalProperties": false,
+        "required": ["action", "title", "notes", "due_date", "urgency_window"],
         "properties": {
           "action": {
             "type": "string",
@@ -138,29 +97,12 @@
               "review_needed"
             ]
           },
-          "title": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "due_date": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
+          "title": { "type": "string" },
+          "notes": { "type": ["string", "null"] },
+          "due_date": { "type": ["string", "null"] },
           "urgency_window": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              null,
-              "72h",
-              "7d",
-              "30d"
-            ]
+            "type": ["string", "null"],
+            "enum": ["72h", "7d", "30d", null]
           }
         }
       }
