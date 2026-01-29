@@ -112,7 +112,7 @@ def render_digest(tasks: List[Dict[str, Any]]) -> str:
     for k in buckets_order:
         label = _bucket_label(k, labels)
         n = len(groups[k])
-        # clean up digest by hiding empty buckets
+        # clean up digest by hiding empty buckets.
         if n == 0:
             continue
         # Open urgent + review by default so you can “review the buckets” quickly
@@ -160,7 +160,7 @@ def render_digest(tasks: List[Dict[str, Any]]) -> str:
 def send_digest_via_gmail_api(service, user_id: str, to_email: str, subject: str, html: str):
     msg = MIMEText(html, "html", "utf-8")
     msg["to"] = to_email
-    msg["from"] = to_email
+    msg["from"] = user_id
     msg["subject"] = subject
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
     service.users().messages().send(userId=user_id, body={"raw": raw}).execute()
