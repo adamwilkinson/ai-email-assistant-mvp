@@ -2,7 +2,7 @@ import argparse, os, time, datetime as dt
 from dotenv import load_dotenv
 from gmail_connector import init_oauth, gmail_service, fetch_recent_threads, fetch_thread_messages_text
 import store
-from triage import load_schema, triage_thread
+from triage import load_schema_dynamic, triage_thread
 from digest import render_digest, send_digest_via_gmail_api
 
 def header_value(msg, name: str) -> str:
@@ -43,7 +43,7 @@ def main():
 
     os.makedirs("data", exist_ok=True)
     conn = store.connect(os.path.join("data","state.sqlite"))
-    schema = load_schema("schema.json")
+    schema = load_schema_dynamic("schema.json")
 
     if args.done:
         store.mark_task_done(conn, args.done)
@@ -89,7 +89,7 @@ def main():
         print(f"[{now_iso()}] open tasks: {len(tasks)}")
         if send_digest:
             html = render_digest(tasks)
-            send_digest_via_gmail_api(svc, user, user, "Daily Action Digest — Email Intelligence MVP", html)
+            send_digest_via_gmail_api(svc, user, user, "[EIMVP DIGEST] Daily Action Digest — Email Intelligence MVP", html)
             print(f"[{now_iso()}] digest sent to {user}")
 
     if args.run_once:
