@@ -11,9 +11,11 @@ This starter kit is a **local-first** MVP for:
 1) Put Google OAuth Desktop credentials at `secrets/client_secret.json`
 2) `python -m venv .venv && source .venv/bin/activate`
 3) `pip install -r requirements.txt`
-4) `cp .env.example .env` and edit `GMAIL_USER`
-5) `python app.py --init`
-6) `python app.py --run-once` (or `--poll --interval-min 10`)
+4) `cp .env.example .env` and edit required feilds.
+5) `python src/app.py --init`
+6) `python src/app.py --run-once` (or `--poll --interval-min 10`)
+7) `python src/app.py --list`
+8) `python src/app.py --done task-id`
 
 ## Notes
 - Default LLM mode is `simulate` so you can test without keys.
