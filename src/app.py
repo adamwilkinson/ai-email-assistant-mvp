@@ -38,6 +38,10 @@ def main():
     user = os.getenv("GMAIL_USER","").strip()
     if not user:
         raise RuntimeError("Set GMAIL_USER in .env")
+    digest_to_email = os.getenv("DIGEST_TO_EMAIL", "").strip()
+    if not digest_to_email:
+        raise RuntimeError("Set DIGEST_TO_EMAIL in .env")
+    digest_subject_prefix = os.getenv("DIGEST_SUBJECT_PREFIX", "EIMVP DIGEST")
 
     creds = init_oauth(client_secret, token_path)
     svc = gmail_service(creds)
@@ -108,8 +112,8 @@ def main():
         print(f"[{now_iso()}] open tasks: {len(tasks)}")
         if send_digest:
             html = render_digest(tasks)
-            send_digest_via_gmail_api(svc, user, user, "[EIMVP DIGEST] Daily Action Digest — Email Intelligence MVP", html)
-            print(f"[{now_iso()}] digest sent to {user}")
+            send_digest_via_gmail_api(svc, user, digest_to_email, f"[{digest_subject_prefix}] Daily Action Digest", html)
+            print(f"[{now_iso()}] digest sent to {digest_to_email}")
 
     if args.run_once:
         cycle(); return
