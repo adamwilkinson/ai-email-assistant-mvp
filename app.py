@@ -23,6 +23,7 @@ def main():
     p.add_argument("--poll", action="store_true")
     p.add_argument("--interval-min", type=int, default=10)
     p.add_argument("--done", type=int, help="Mark a task id as done")
+    p.add_argument("--list", action="store_true", help="List open tasks")
     args = p.parse_args()
 
     os.makedirs("secrets", exist_ok=True)
@@ -48,6 +49,24 @@ def main():
     if args.done:
         store.mark_task_done(conn, args.done)
         print(f"Marked task {args.done} as done.")
+        return
+    
+    if args.list:
+        tasks = store.fetch_open_tasks(conn)
+        if not tasks:
+            print("No open tasks ✅")
+            return
+
+        print("\nOpen tasks:")
+        for t in tasks[:200]:
+            due = t.get("due_date") or "—"
+            bucket = t.get("bucket") or "—"
+            subj = (t.get("thread_subject") or "—").strip()
+            title = (t.get("title") or "").strip()
+            pr = (t.get("priority") or "").strip()
+
+            print(f"#{t['id']:>4}  [{pr:<6}]  due {due:<10}  {bucket:<18}  {title}")
+            print(f"      subj: {subj}")
         return
 
     lookback_days = int(os.getenv("LOOKBACK_DAYS","2"))

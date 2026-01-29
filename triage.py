@@ -46,7 +46,7 @@ def build_prompt(thread_subject: str, messages: List[Dict[str, Any]], schema: di
     domains = schema["properties"]["domain"]["enum"]
     my_email = os.getenv("MY_EMAIL","").strip().lower()
     parts = []
-    parts.append(f"You are an AI assistant for a financial analyst and auditor.")
+    parts.append(f"You are an AI email assistant with the goal of triaging emails to save time.")
     parts.append(f"Return ONLY valid JSON that matches the provided schema. Be EXACT when referencing the schema for allowed values.")
     parts.append(f"Be conservative: if low-impact or informational, set priority='ignore'. If 'recommended_actions' is not empty then ")
     parts.append(f"and priority='ignore, then set priority='normal")
