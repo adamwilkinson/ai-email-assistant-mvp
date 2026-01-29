@@ -1,11 +1,29 @@
-import os, json, re
+import os, json, re, copy
 from typing import Any, Dict, List
 import requests
 from jsonschema import validate
 
-def load_schema(path: str) -> Dict[str, Any]:
+def load_schema_dynamic(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        schema = json.load(f)
+
+    schema = copy.deepcopy(schema)
+
+    domains_env = os.getenv("DOMAINS", "").strip()
+    if domains_env:
+        domains = [d.strip() for d in domains_env.split(",") if d.strip()]
+        # enforce at least 2 domains to avoid weirdness
+        if len(domains) >= 2:
+            schema["properties"]["domain"]["enum"] = domains
+
+    default_domain = os.getenv("DOMAIN_DEFAULT", "").strip()
+    if default_domain:
+        schema.setdefault("properties", {}).setdefault("domain", {}).setdefault("enum", [])
+        # (optional) you can ensure the default is in the enum list
+        if "enum" in schema["properties"]["domain"] and default_domain not in schema["properties"]["domain"]["enum"]:
+            schema["properties"]["domain"]["enum"].append(default_domain)
+
+    return schema
 
 def strip_quotes_and_signatures(text: str) -> str:
     lines = text.splitlines()
@@ -24,14 +42,16 @@ def strip_quotes_and_signatures(text: str) -> str:
             break
     return out
 
-def build_prompt(thread_subject: str, messages: List[Dict[str, Any]]) -> str:
+def build_prompt(thread_subject: str, messages: List[Dict[str, Any]], schema: dict) -> str:
+    domains = schema["properties"]["domain"]["enum"]
+    my_email = os.getenv("MY_EMAIL","").strip().lower()
     parts = []
-    parts.append("You are an AI assistant for a financial analyst and auditor.")
-    parts.append("Return ONLY valid JSON that matches the provided schema. Be EXACT when referencing the schema for allowed values.")
-    parts.append("Be conservative: if low-impact or informational, set priority='ignore' and domain='noise'.")
-    parts.append("If no action is needed: domain=\"noise\", intent=\"fyi\", priority=\"ignore\", confidence between 0 and 1, ")
-    parts.append("extractions=[], recommended_actions=[{\"action\":\"suppress\",\"title\":\"Ignore low-impact email\",")
-    parts.append("\"notes\":\"No action required.\",\"due_date\":null,\"urgency_window\":null}]")
+    parts.append(f"You are an AI assistant for a financial analyst and auditor.")
+    parts.append(f"Return ONLY valid JSON that matches the provided schema. Be EXACT when referencing the schema for allowed values.")
+    parts.append(f"Be conservative: if low-impact or informational, set priority='ignore'. If 'recommended_actions' is not empty then ")
+    parts.append(f"and priority='ignore, then set priority='normal")
+    parts.append(f"Allowed domain values are ONLY: {domains}")
+    parts.append(f"If message is from {my_email}, then treat it as sent by me.")
     parts.append(f"Thread subject: {thread_subject}")
     parts.append("Messages (newest last):")
     for m in messages:
@@ -103,10 +123,10 @@ def triage_thread(thread_subject: str, messages: List[Dict[str, Any]], schema: D
         return out
     base_url = os.getenv("LLM_BASE_URL","").strip()
     api_key = os.getenv("LLM_API_KEY","").strip()
-    model = os.getenv("LLM_MODEL","gpt-4.1-mini").strip()
+    model = os.getenv("LLM_MODEL","gpt-4o-mini").strip()
     if not (base_url and api_key):
         raise RuntimeError("LLM_MODE=openai_compatible but LLM_BASE_URL/LLM_API_KEY not set")
-    prompt = build_prompt(thread_subject, messages)
+    prompt = build_prompt(thread_subject, messages, schema)
     raw = call_openai_compatible(prompt, base_url, api_key, model, schema)
     out = json.loads(raw)
     validate(instance=out, schema=schema)
