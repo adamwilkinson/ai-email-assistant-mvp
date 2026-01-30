@@ -17,6 +17,19 @@ This starter kit is a **local-first** MVP for:
 7) `python src/app.py --list`
 8) `python src/app.py --done task-id`
 
+## Demo
+```
+cp .env.example .env
+# set LLM_API_KEY in .env (or use mock triage mode if you keep one)
+python src/app.py --demo demo/demo_threads.json
+open demo/digest_preview.html
+```
+
+### Digest Sample
+<p align="center">
+  <img src="demo/digest_sample.png" alt="Digest sample" width="900" />
+</p>
+
 ## Notes
 - Default LLM mode is `simulate` so you can test without keys.
 - Switch to a real model via `LLM_MODE=openai_compatible` and set `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`.
