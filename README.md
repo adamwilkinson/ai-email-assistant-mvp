@@ -27,7 +27,7 @@ open demo/digest_preview.html
 
 ### Digest Sample
 <p align="center">
-  <img src="demo/digest_sample.png" alt="Digest sample" width="900" />
+  <img src="demo/digest_preview.png" alt="Digest sample" width="900" />
 </p>
 
 ## Notes
