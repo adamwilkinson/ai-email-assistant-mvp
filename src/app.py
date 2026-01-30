@@ -1,7 +1,9 @@
 import argparse, os, time, datetime as dt
+import store
+import json
+from pathlib import Path
 from dotenv import load_dotenv
 from gmail_connector import init_oauth, gmail_service, fetch_recent_threads, fetch_thread_messages_text
-import store
 from triage import load_schema_dynamic, triage_thread
 from digest import render_digest, send_digest_via_gmail_api
 
@@ -24,6 +26,8 @@ def main():
     p.add_argument("--interval-min", type=int, default=10)
     p.add_argument("--done", type=int, help="Mark a task id as done")
     p.add_argument("--list", action="store_true", help="List open tasks")
+    p.add_argument("--demo", type=str, help="Run using demo JSON threads instead of Gmail")
+    p.add_argument("--preview-html", type=str, default="demo/digest_preview.html", help="Where to write the digest HTML in demo mode")
     args = p.parse_args()
 
     os.makedirs("secrets", exist_ok=True)
@@ -77,6 +81,44 @@ def main():
     max_threads = int(os.getenv("MAX_THREADS_PER_RUN","50"))
     conf_thr = float(os.getenv("CONFIDENCE_THRESHOLD","0.55"))
     send_digest = os.getenv("SEND_DIGEST","true").lower() == "true"
+
+    def run_demo(conn, schema, demo_path: str, preview_html_path: str):
+        with open(demo_path, "r", encoding="utf-8") as f:
+            demo = json.load(f)
+
+        threads = demo.get("threads", [])
+        print(f"[DEMO] loaded {len(threads)} demo threads")
+
+        now = now_iso()
+
+        for th in threads:
+            tid = th["thread_id"]
+            subject = th.get("subject", "")
+            latest_history_id = th.get("latest_history_id", tid)
+            msgs = th.get("messages", [])
+
+            # mimic the real pipeline storage
+            store.upsert_thread(conn, "demo", tid, subject, now, str(latest_history_id))
+
+            # triage using your existing LLM pipeline
+            out = triage_thread(subject, msgs, schema)
+
+            # record + tasks
+            store.record_triage(conn, "demo", tid, now, os.getenv("LLM_MODEL",""), float(out.get("confidence", 0.5)), str(latest_history_id), out)
+            store.create_tasks_from_actions(conn, "demo", tid, now, out)
+
+        tasks = store.fetch_open_tasks(conn)
+        html = render_digest(tasks)
+
+        Path(preview_html_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(preview_html_path).write_text(html, encoding="utf-8")
+
+        print(f"[DEMO] open tasks: {len(tasks)}")
+        print(f"[DEMO] wrote digest preview: {preview_html_path}")
+
+    if args.demo:
+        run_demo(conn, schema, args.demo, args.preview_html)
+        return
 
     def cycle():
         threads = fetch_recent_threads(svc, user, lookback_days=lookback_days, max_threads=max_threads)

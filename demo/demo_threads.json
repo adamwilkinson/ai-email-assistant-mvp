@@ -1,0 +1,189 @@
+{
+  "threads": [
+    {
+      "thread_id": "t_demo_001",
+      "subject": "Audit request: Q4 bank confirmations needed",
+      "latest_history_id": "h001",
+      "messages": [
+        {
+          "from": "controller@acme.com",
+          "date": "2026-01-28T09:15:00Z",
+          "text": "Hi Adam — please provide Q4 bank confirmations and the updated cash lead schedule by Feb 2. Thanks."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_002",
+      "subject": "Invoice #1843 — remittance date?",
+      "latest_history_id": "h002",
+      "messages": [
+        {
+          "from": "ap@clientco.com",
+          "date": "2026-01-27T14:02:00Z",
+          "text": "Can you confirm when invoice 1843 for $12,500 will be paid? We need a remittance date this week."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_003",
+      "subject": "Re: Discovery call scheduling",
+      "latest_history_id": "h003",
+      "messages": [
+        {
+          "from": "prospect@newco.com",
+          "date": "2026-01-28T17:20:00Z",
+          "text": "Are you free Thursday 2pm or Friday 10am for a 30-min call?"
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_004",
+      "subject": "Contract renewal / expiry notice — action required",
+      "latest_history_id": "h004",
+      "messages": [
+        {
+          "from": "vendor@tooling.com",
+          "date": "2026-01-28T08:30:00Z",
+          "text": "Your contract renews on 2026-01-31. Please confirm renewal or cancellation before that date."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_005",
+      "subject": "Follow-up: outstanding PBC items for audit",
+      "latest_history_id": "h005",
+      "messages": [
+        {
+          "from": "audit@firm.com",
+          "date": "2026-01-27T16:10:00Z",
+          "text": "Reminder: we still need the AR aging, bank recon, and signed rep letter draft. Can you confirm ETA?"
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_006",
+      "subject": "Payment promise: invoice 1901 will be paid next Tuesday",
+      "latest_history_id": "h006",
+      "messages": [
+        {
+          "from": "ap@bigclient.com",
+          "date": "2026-01-28T13:05:00Z",
+          "text": "We will process invoice 1901 for USD 8,250 next Tuesday. Please confirm bank details unchanged."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_007",
+      "subject": "FYI: Monthly newsletter — Finance & Ops",
+      "latest_history_id": "h007",
+      "messages": [
+        {
+          "from": "newsletter@random.com",
+          "date": "2026-01-28T10:00:00Z",
+          "text": "Here are this month’s updates and product announcements..."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_008",
+      "subject": "Urgent: Evidence request due tomorrow",
+      "latest_history_id": "h008",
+      "messages": [
+        {
+          "from": "audit@firm.com",
+          "date": "2026-01-28T18:45:00Z",
+          "text": "We need the inventory rollforward by 2026-01-29 EOD. This is required to finalize fieldwork."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_009",
+      "subject": "Client dispute: short-paid invoice 1770",
+      "latest_history_id": "h009",
+      "messages": [
+        {
+          "from": "ar@yourcompany.com",
+          "date": "2026-01-26T11:10:00Z",
+          "text": "Client short-paid invoice 1770 by $500 citing a pricing discrepancy. Need review and response."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_010",
+      "subject": "Meeting reschedule request",
+      "latest_history_id": "h010",
+      "messages": [
+        {
+          "from": "client@acme.com",
+          "date": "2026-01-28T15:40:00Z",
+          "text": "Can we move tomorrow’s call to 3pm? Otherwise Friday morning works."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_011",
+      "subject": "Action needed: confirm audit scope assumptions",
+      "latest_history_id": "h011",
+      "messages": [
+        {
+          "from": "manager@auditfirm.com",
+          "date": "2026-01-27T09:35:00Z",
+          "text": "Please confirm scope: subsidiaries included, materiality threshold, and whether we rely on internal controls testing."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_012",
+      "subject": "Overdue: AP is waiting on W-9 before payment",
+      "latest_history_id": "h012",
+      "messages": [
+        {
+          "from": "ap@clientco.com",
+          "date": "2026-01-28T12:12:00Z",
+          "text": "Payment is on hold until we receive your updated W-9. Please send ASAP."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_013",
+      "subject": "Re: Evidence — attached (please confirm receipt)",
+      "latest_history_id": "h013",
+      "messages": [
+        {
+          "from": "you@yourmail.com",
+          "date": "2026-01-27T19:20:00Z",
+          "text": "Sharing the requested schedules. Please confirm receipt and let me know if anything else is needed."
+        },
+        {
+          "from": "audit@firm.com",
+          "date": "2026-01-28T07:50:00Z",
+          "text": "Received, thanks. We'll review and follow up if needed."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_014",
+      "subject": "Confusing thread: is this a deadline or FYI?",
+      "latest_history_id": "h014",
+      "messages": [
+        {
+          "from": "unknown@somewhere.com",
+          "date": "2026-01-28T06:30:00Z",
+          "text": "Per earlier note, we may need this soon — not sure. Let's circle back."
+        }
+      ]
+    },
+    {
+      "thread_id": "t_demo_015",
+      "subject": "Receipt: your payment has been processed",
+      "latest_history_id": "h015",
+      "messages": [
+        {
+          "from": "billing@tooling.com",
+          "date": "2026-01-28T20:00:00Z",
+          "text": "Payment processed successfully. No action required."
+        }
+      ]
+    }
+  ]
+}
