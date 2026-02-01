@@ -33,5 +33,6 @@ open demo/digest_preview.html
 ## Notes
 - Default LLM mode is `simulate` so you can test without keys.
 - Switch to a real model via `LLM_MODE=openai_compatible` and set `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`.
+- 2-phase LLM architecture.
 - Stores extracted facts + tasks in SQLite under `data/state.sqlite`.
 - To hard resest the state, remove the database file `rm -f data/state.sqlite`.
