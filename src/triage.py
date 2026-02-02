@@ -42,6 +42,11 @@ def strip_quotes_and_signatures(text: str) -> str:
             break
     return out
 
+def initial_triage_layer(thread_subject: str, messages: List[Dict[str, Any]], schema: dict) -> bool:
+    my_email = os.getenv("MY_EMAIL","").strip().lower()
+    # TODO: prompt for first pass at the email threads...
+
+
 def build_prompt(thread_subject: str, messages: List[Dict[str, Any]], schema: dict) -> str:
     domains = schema["properties"]["domain"]["enum"]
     my_email = os.getenv("MY_EMAIL","").strip().lower()
