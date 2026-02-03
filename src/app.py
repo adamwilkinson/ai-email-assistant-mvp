@@ -17,6 +17,83 @@ def header_value(msg, name: str) -> str:
 def now_iso():
     return dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
+def extract_subject_and_history_id(th: dict) -> tuple[str, str | None]:
+    """
+    Extract subject + latest_history_id from a Gmail thread response.
+
+    - Prefers Subject header from the first message (most reliable).
+    - Falls back to thread snippet if messages metadata is missing.
+    - latest_history_id is taken from the newest message in the thread.
+    """
+    subject = "(no subject)"
+    msgs_meta = th.get("messages", []) or []
+    latest_history_id = None
+
+    if msgs_meta:
+        # Usually subject is on the first message in the thread
+        subject = header_value(msgs_meta[0], "Subject") or "(no subject)"
+        latest_history_id = msgs_meta[-1].get("historyId")  # newest message
+    else:
+        # fallback if messages metadata missing for some reason
+        subject = th.get("snippet") or "(no subject)"
+
+    return subject, (str(latest_history_id) if latest_history_id is not None else None)
+
+def _parse_iso_dt(s: str):
+    if not s:
+        return None
+    try:
+        # handle Z
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        return dt.datetime.fromisoformat(s)
+    except Exception:
+        return None
+    
+# Basic waiting on response follow up detector.
+# TODO: use LLM to determine if the thread was resolved and doesnt require a response.
+def waiting_on_reply(messages: list[dict], my_email: str, stale_days: int) -> tuple[bool, dt.datetime | None]:
+    """
+    Returns (is_stale, last_outbound_dt) if:
+      - last outbound msg from me exists
+      - no inbound msg from others after that outbound
+      - outbound is older than stale_days
+    """
+    my_email = (my_email or "").lower().strip()
+    if not my_email:
+        return (False, None)
+
+    # Sort messages by parsed date (fallback keeps original order)
+    items = []
+    for m in messages:
+        d = _parse_iso_dt(m.get("date", ""))
+        items.append((d, m))
+    items.sort(key=lambda x: x[0] or dt.datetime.min.replace(tzinfo=dt.timezone.utc))
+
+    last_out = None
+    last_in = None
+
+    for d, m in items:
+        if d is None:
+            continue
+        frm = (m.get("from") or "").lower()
+        is_me = my_email in frm  # simple containment works with "Name <email>"
+        if is_me:
+            last_out = d
+        else:
+            last_in = d
+
+    if last_out is None:
+        return (False, None)
+
+    # if there is an inbound after my last outbound, I'm not waiting
+    if last_in is not None and last_in > last_out:
+        return (False, last_out)
+
+    now = dt.datetime.now(dt.timezone.utc)
+    age_days = (now - last_out).days
+    return (age_days >= stale_days, last_out)
+
 def main():
     load_dotenv()
     p = argparse.ArgumentParser("Email Intelligence MVP — Gmail + Daily Digest (Local)")
@@ -77,6 +154,10 @@ def main():
             print(f"      subj: {subj}")
         return
 
+    fup_lookback_days = int(os.getenv("FOLLOWUP_LOOKBACK_DAYS", "90"))
+    fup_max_threads = int(os.getenv("FOLLOWUP_MAX_THREADS", "300"))
+    fup_enabled = os.getenv("FOLLOWUP_ENABLED", "true").lower() == "true"
+
     lookback_days = int(os.getenv("LOOKBACK_DAYS","2"))
     max_threads = int(os.getenv("MAX_THREADS_PER_RUN","50"))
     conf_thr = float(os.getenv("CONFIDENCE_THRESHOLD","0.55"))
@@ -121,22 +202,42 @@ def main():
         return
 
     def cycle():
+        if fup_enabled:
+            lookback_threads = fetch_recent_threads(svc, user, lookback_days=fup_lookback_days, max_threads=fup_max_threads)
+            for th in lookback_threads:
+                tid = th["id"]
+
+                msgs = fetch_thread_messages_text(svc, user, tid, max_messages=6)
+                subject, latest_history_id = extract_subject_and_history_id(th)
+                
+                # --- Follow-up scan: waiting on replies ---
+                my_email = os.getenv("MY_EMAIL", "").strip()
+                stale_days = int(os.getenv("FOLLOWUP_STALE_DAYS", "14"))
+                followup_domain = (os.getenv("FOLLOWUP_DOMAIN", "followups") or "followups").strip().lower()
+                followup_priority = (os.getenv("FOLLOWUP_PRIORITY", "normal") or "normal").strip().lower()
+
+                is_stale, last_out_dt = waiting_on_reply(msgs, my_email, stale_days)
+                if is_stale and last_out_dt:
+                    # ensure the thread bucket reflects followups (so it shows in digest buckets)
+                    # (this updates threads.digest_bucket; safe even if LLM also sets it later)
+                    conn.execute("""
+                    UPDATE threads SET digest_bucket=? WHERE provider=? AND thread_id=?
+                    """, (followup_domain, "gmail", tid))
+                    conn.commit()
+
+                    title = f"Follow up: {subject or 'Email thread'}"
+                    notes = f"Waiting on reply. Last outbound from {my_email} was {last_out_dt.date().isoformat()}."
+                    # due_date can be today; or last_out + stale_days
+                    due_date = dt.date.today().isoformat()
+
+                    store.create_followup_task(conn, "gmail", tid, now_iso(), followup_priority, title, due_date, notes)
+
         threads = fetch_recent_threads(svc, user, lookback_days=lookback_days, max_threads=max_threads)
         print(f"[{now_iso()}] fetched {len(threads)} threads")
         for th in threads:
             tid = th["id"]
 
-            # Subject logic to account for snippet missing subject
-            subject = "(no subject)"
-            msgs_meta = th.get("messages", []) or []
-            latest_history_id = None
-            if msgs_meta:
-                # Usually subject is on the first message in the thread
-                subject = header_value(msgs_meta[0], "Subject") or "(no subject)"
-                latest_history_id = msgs_meta[-1].get("historyId")  # newest message
-            else:
-                # fallback if messages metadata missing for some reason
-                subject = th.get("snippet") or "(no subject)"
+            subject, latest_history_id = extract_subject_and_history_id(th)
 
             # Check if the thread has changed since last poll, and skip triage if not
             if latest_history_id and (not store.should_analyze_thread(conn, "gmail", tid, latest_history_id)):

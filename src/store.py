@@ -59,6 +59,15 @@ def mark_task_done(conn, task_id: int):
     conn.execute("UPDATE tasks SET status='done' WHERE id=?", (task_id,))
     conn.commit()
 
+def create_followup_task(conn, provider: str, thread_id: str, created_at: str,
+                        priority: str, title: str, due_date: str | None, notes: str):
+  key = _task_key(provider, thread_id, title, due_date)
+  conn.execute("""
+    INSERT OR IGNORE INTO tasks(provider, thread_id, created_at, priority, title, due_date, notes, task_key)
+    VALUES(?,?,?,?,?,?,?,?)
+  """, (provider, thread_id, created_at, priority, title, due_date, notes, key))
+  conn.commit()
+
 # Helper to decide whether thread needs re-analysis
 def should_analyze_thread(conn, provider: str, thread_id: str, latest_history_id: str) -> bool:
     cur = conn.execute("""
